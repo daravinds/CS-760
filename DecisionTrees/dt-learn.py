@@ -1,9 +1,9 @@
-from __future__ import print_function
 from scipy.io import arff
+import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import math
-import pdb
+import random
 
 CLASS_INDEX = -1
 class Node():
@@ -22,36 +22,63 @@ class DecisionTree():
   training_file = None
   test_file = None
   min_instances = 0
+  correct_predictions = 0
+  wrong_predictions = 0
+  dataset_size = 0
 
-  def learn(self, training_file, min_instances):
+  def learn(self, training_file, min_instances, print_text, fraction = None):
     self.training_file = training_file
     self.min_instances = int(min_instances)
     data, self.metadata = arff.loadarff(open(self.training_file, "r"))
+    if(fraction != None):
+      data = self.pick_random_fraction(data, fraction)
+    self.dataset_size = len(data)
     self.all_attributes = self.metadata._attrnames
     self.root = self.build_tree(data, self.all_attributes[:-1], '+')
-    self.print_node(0, self.root)
+    if(print_text):
+      self.print_node(0, self.root)
 
+  def pick_random_fraction(self, data, fraction):
+    taken = {}
+    total_size = len(data)
+    expected_size = fraction * total_size
+    list = []
+    while(len(list) < expected_size):
+      random_index = random.randint(0, total_size - 1)
+      if(not taken.get(random_index), False):
+        list.append(data[random_index])
+        taken[random_index] = True
+    return list
 
-  def predict(self, test_file):
+  def predict(self, test_file, print_text):
+    test_label_confidence_pairs = []
     self.test_file = test_file
     data, self.metadata = arff.loadarff(open(self.test_file, "r"))
-    positives = 0
-    negatives = 0
-    print("<Predictions for the Test Set Instances>")
+    correctly_classified_count = 0
+    misclassified_count = 0
+    if(print_text):
+      print("<Predictions for the Test Set Instances>")
     for index, record in enumerate(data):
-      predicted_label = self.get_label(self.root, record)
+      target_leaf = self.get_label(self.root, record)
+      predicted_label = target_leaf.label
       actual_label = record[CLASS_INDEX]
-      print(str(index + 1) + ": Actual: " + str(actual_label) + " Predicted: " + str(predicted_label))
+      confidence = (target_leaf.pos_count + 1.0) / (target_leaf.pos_count + target_leaf.neg_count + 2.0)
+      test_label_confidence_pairs.append((actual_label, confidence))
+      if(print_text):
+        print(str(index + 1) + ": Actual: " + str(actual_label) + " Predicted: " + str(predicted_label))
       if predicted_label == actual_label:
-        positives = positives + 1
+        correctly_classified_count = correctly_classified_count + 1
       else:
-        negatives = negatives + 1
-    print("Number of correctly classified: " + str(positives) + " Total number of test instances: " + str(len(data)), end = '')
+        misclassified_count = misclassified_count + 1
+    self.correct_predictions = correctly_classified_count
+    self.wrong_predictions = misclassified_count
+    if(print_text):
+      sys.stdout.write("Number of correctly classified: " + str(correctly_classified_count) + " Total number of test instances: " + str(len(data)))
+    return test_label_confidence_pairs
 
   def get_label(self, node, record):
-    # pdb.set_trace()
     if(node.leaf):
-      return node.label
+      return node
     else:
       value = record[node.feature]
       next_node = None
@@ -93,15 +120,15 @@ class DecisionTree():
         neg_count = neg_count + 1
     return pos_count, neg_count
 
-  def print_node_details(self, node):
-    print("feature:"  + str(node.feature))
-    print("description:"  + str(node.description))
-    print("val:"  + str(node.val))
-    print("pos_count:"  + str(node.pos_count))
-    print("neg_count:"  + str(node.neg_count))
-    print("leaf:"  + str(node.leaf))
-    print("label:"  + str(node.label))
-    print("children count:"  + str(len(node.children)))
+  # def print_node_details(self, node):
+  #   print("feature:"  + str(node.feature))
+  #   print("description:"  + str(node.description))
+  #   print("val:"  + str(node.val))
+  #   print("pos_count:"  + str(node.pos_count))
+  #   print("neg_count:"  + str(node.neg_count))
+  #   print("leaf:"  + str(node.leaf))
+  #   print("label:"  + str(node.label))
+  #   print("children count:"  + str(len(node.children)))
 
   def build_tree(self, data, attributes, parent_majority_class):
     node = Node()
@@ -120,8 +147,10 @@ class DecisionTree():
       best, threshold = self.choose_best_attribute(data, attributes)
       index_of_best = self.all_attributes.index(best)
       node.feature = best
-      # new_attributes = [attribute for attribute in attributes if attribute != best]
-      new_attributes = attributes
+      if self.is_nominal_attribute(index_of_best):
+        new_attributes = [attribute for attribute in attributes if attribute != best]
+      else:
+        new_attributes = attributes
       node.children = []
       if(self.is_nominal_attribute(index_of_best)):
         for val in self.get_values(data, best):
@@ -169,6 +198,7 @@ class DecisionTree():
         max_gain = gain
         attribute_with_max_gain = attribute
         threshold = thresh
+
     return attribute_with_max_gain, threshold
 
   def info_gain(self, data, attribute):
@@ -263,8 +293,108 @@ class DecisionTree():
 
 def perform_classification():
   decision_tree = DecisionTree()
-  decision_tree.learn(sys.argv[1], sys.argv[3])
-  decision_tree.predict(sys.argv[2])
+  decision_tree.learn(sys.argv[1], sys.argv[3], True, None)
+  test_label_confidence_pairs = decision_tree.predict(sys.argv[2], True)
+  return test_label_confidence_pairs
+  
+
+# def plot_learning_curve():
+#   fractions = [0.05, 0.1, 0.2, 0.5]
+#   avg_accuracy = {}
+#   min_accuracy = {}
+#   max_accuracy = {}
+#   sizes = list()
+#   for fraction in fractions:
+#     total_accuracy_for_fraction = 0.0
+#     for _ in range(10):
+#       decision_tree = DecisionTree()
+#       decision_tree.learn(sys.argv[1], 10, False, fraction)
+#       decision_tree.predict(sys.argv[2], False)
+#       size = decision_tree.dataset_size
+#       current_accuracy = float(decision_tree.correct_predictions) / (decision_tree.correct_predictions + decision_tree.wrong_predictions)
+#       if(not min_accuracy.has_key(size) or current_accuracy < min_accuracy[size]):
+#         min_accuracy[size] = current_accuracy
+#       if(not max_accuracy.has_key(size) or current_accuracy > max_accuracy[size]):
+#         max_accuracy[size] = current_accuracy
+#       total_accuracy_for_fraction += current_accuracy
+#     avg_accuracy[size] = total_accuracy_for_fraction / 10.0
+#     sizes.append(decision_tree.dataset_size)
+
+#   # Average accuracy once for the entire dataset
+#   decision_tree = DecisionTree()
+#   decision_tree.learn(sys.argv[1], 10, False, None)
+#   decision_tree.predict(sys.argv[2], False)
+#   current_accuracy = float(decision_tree.correct_predictions) / (decision_tree.correct_predictions + decision_tree.wrong_predictions)
+#   avg_accuracy[decision_tree.dataset_size] = min_accuracy[decision_tree.dataset_size] = max_accuracy[decision_tree.dataset_size] = current_accuracy
+#   sizes.append(decision_tree.dataset_size)
+
+#   sizes = sorted(sizes)
+#   xs = []
+#   ys = []
+#   for size in sizes:
+#     xs.append(size)
+#     ys.append(min_accuracy[size])
+#   plt.plot(xs, ys, 'k:', label='Minimum Accuracy')
+
+#   xs = []
+#   ys = []
+#   for size in sizes:
+#     xs.append(size)
+#     ys.append(avg_accuracy[size])
+#   plt.plot(xs, ys, 'k', label='Average Accuracy')
+
+#   xs = []
+#   ys = []
+#   for size in sizes:
+#     xs.append(size)
+#     ys.append(max_accuracy[size])
+
+#   plt.plot(xs, ys, 'k--', label='Maximum Accuracy')
+#   legend = plt.legend(loc='lower right', shadow=True)
+#   plt.title("Learning Curve")
+#   plt.xlabel("Training Set Size")
+#   plt.ylabel("Accuracy")
+#   plt.show()
+
+# def plot_roc_curve():
+#   xs = []
+#   ys = []
+#   decision_tree = DecisionTree()
+#   decision_tree.learn(sys.argv[1], sys.argv[3], False, None)
+#   test_label_confidence_pairs = decision_tree.predict(sys.argv[2], False)
+#   sorted_pairs = sorted(test_label_confidence_pairs, key = lambda row: (row[1], row[0]))
+#   sorted_pairs = sorted_pairs[::-1]
+
+#   labels = [record[0] for record in sorted_pairs]
+#   num_neg = labels.count('-')
+#   num_pos = labels.count('+')
+#   tp = 0
+#   fp = 0
+#   last_tp = 0
+#   fpr = 0
+#   tpr = 0
+#   xs.append(0.0)
+#   ys.append(0.0)
+#   for index in range(len(sorted_pairs)):
+#     if index > 0 and sorted_pairs[index][1] != sorted_pairs[index - 1][1] and sorted_pairs[index][0] == '-' and tp > last_tp:
+#       fpr = float(fp) / num_neg
+#       tpr = float(tp) / num_pos
+#       xs.append(fpr)
+#       ys.append(tpr)
+#       last_tp = tp
+#     if sorted_pairs[index][0] == '+':
+#       tp = tp + 1
+#     else:
+#       fp = fp + 1
+#   xs.append(1.0)
+#   ys.append(1.0)
+#   plt.plot(xs, ys)
+#   plt.title("ROC Curve")
+#   plt.xlabel("False Positive Rate")
+#   plt.ylabel("True Positive Rate")
+#   plt.show()
 
 if __name__ == "__main__":
   perform_classification()
+  # plot_learning_curve()
+  # plot_roc_curve()

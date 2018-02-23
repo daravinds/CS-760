@@ -7,8 +7,8 @@ def build_confusion_matrix(file):
   with open(file, 'rb') as csvfile:
     records = csv.reader(csvfile)
     for record in records:
-      row = int(record[1]) - 1
-      col = int(record[0]) - 1
+      row = int(record[0]) - 1
+      col = int(record[1]) - 1
       matrix[row][col] = matrix[row][col] + 1;
   print matrix
 
