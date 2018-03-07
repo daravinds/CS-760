@@ -1,9 +1,10 @@
 from scipy.io import arff
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import math
 import random
+import pdb
 
 CLASS_INDEX = -1
 class Node():
@@ -356,45 +357,53 @@ def perform_classification():
 #   plt.ylabel("Accuracy")
 #   plt.show()
 
-# def plot_roc_curve():
-#   xs = []
-#   ys = []
-#   decision_tree = DecisionTree()
-#   decision_tree.learn(sys.argv[1], sys.argv[3], False, None)
-#   test_label_confidence_pairs = decision_tree.predict(sys.argv[2], False)
-#   sorted_pairs = sorted(test_label_confidence_pairs, key = lambda row: (row[1], row[0]))
-#   sorted_pairs = sorted_pairs[::-1]
+def plot_roc_curve():
+  xs = []
+  ys = []
+  decision_tree = DecisionTree()
+  decision_tree.learn(sys.argv[1], sys.argv[3], False, None)
+  test_label_confidence_pairs = decision_tree.predict(sys.argv[2], False)
+  for d in test_label_confidence_pairs:
+    print(d)
+  # [print(d) for d in test_label_confidence_pairs]
+  sorted_pairs = sorted(test_label_confidence_pairs, key = lambda row: (row[1], row[0]))
+  sorted_pairs = sorted_pairs[::-1]
+  pdb.set_trace()
+  print("After sorting----------------------------")
+  for d in sorted_pairs:
+    print(d)
+  # [print(d) for d in sorted_pairs]
 
-#   labels = [record[0] for record in sorted_pairs]
-#   num_neg = labels.count('-')
-#   num_pos = labels.count('+')
-#   tp = 0
-#   fp = 0
-#   last_tp = 0
-#   fpr = 0
-#   tpr = 0
-#   xs.append(0.0)
-#   ys.append(0.0)
-#   for index in range(len(sorted_pairs)):
-#     if index > 0 and sorted_pairs[index][1] != sorted_pairs[index - 1][1] and sorted_pairs[index][0] == '-' and tp > last_tp:
-#       fpr = float(fp) / num_neg
-#       tpr = float(tp) / num_pos
-#       xs.append(fpr)
-#       ys.append(tpr)
-#       last_tp = tp
-#     if sorted_pairs[index][0] == '+':
-#       tp = tp + 1
-#     else:
-#       fp = fp + 1
-#   xs.append(1.0)
-#   ys.append(1.0)
-#   plt.plot(xs, ys)
-#   plt.title("ROC Curve")
-#   plt.xlabel("False Positive Rate")
-#   plt.ylabel("True Positive Rate")
-#   plt.show()
+  labels = [record[0] for record in sorted_pairs]
+  num_neg = labels.count('-')
+  num_pos = labels.count('+')
+  tp = 0
+  fp = 0
+  last_tp = 0
+  fpr = 0
+  tpr = 0
+  xs.append(0.0)
+  ys.append(0.0)
+  for index in range(len(sorted_pairs)):
+    if index > 0 and sorted_pairs[index][1] != sorted_pairs[index - 1][1] and sorted_pairs[index][0] == '-' and tp > last_tp:
+      fpr = float(fp) / num_neg
+      tpr = float(tp) / num_pos
+      xs.append(fpr)
+      ys.append(tpr)
+      last_tp = tp
+    if sorted_pairs[index][0] == '+':
+      tp = tp + 1
+    else:
+      fp = fp + 1
+  xs.append(1.0)
+  ys.append(1.0)
+  plt.plot(xs, ys)
+  plt.title("ROC Curve")
+  plt.xlabel("False Positive Rate")
+  plt.ylabel("True Positive Rate")
+  plt.show()
 
 if __name__ == "__main__":
-  perform_classification()
+  # perform_classification()
   # plot_learning_curve()
-  # plot_roc_curve()
+  plot_roc_curve()
