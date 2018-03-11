@@ -1,22 +1,31 @@
 from scipy.io import arff
 import sys
 import math
-import matplotlib.pyplot as plt
-import pdb
-
 
 class NaiveBayes():
-  training_file = None
-  test_file = None
-  metadata = None
-  class_counts = dict()
-  class_probabilities = dict()
-  conditional_counts = dict()
-  conditional_probabilities = dict()
-  curve_data = list()
-  correctly_predicted_count = 0
+  # training_file = None
+  # test_file = None
+  # metadata = None
+  # class_counts = dict()
+  # class_probabilities = dict()
+  # conditional_counts = dict()
+  # conditional_probabilities = dict()
+  # curve_data = list()
+  # correctly_predicted_count = 0
+
+  def initialize_variables(self):
+    self.training_file = None
+    self.test_file = None
+    self.metadata = None
+    self.class_counts = dict()
+    self.class_probabilities = dict()
+    self.conditional_counts = dict()
+    self.conditional_probabilities = dict()
+    self.curve_data = list()
+    self.correctly_predicted_count = 0
 
   def perform_naive_bayes(self, data, metadata):
+    self.initialize_variables()
     self.metadata = metadata
     class_attribute = self.metadata._attrnames[-1]
     class_values = self.metadata._attributes[class_attribute][1]
@@ -104,19 +113,34 @@ class NaiveBayes():
     return count
 
 class TAN():
-  training_file = None
-  test_file = None
-  metadata = None
-  class_counts = dict()
-  class_probabilities = dict()
-  conditional_counts = dict()
-  conditional_probabilities = dict()
-  mutual_information = dict()
-  root_feature = None
-  parent_mapping = dict()
-  printer = None
-  curve_data = list()
-  correctly_predicted_count = 0
+  # training_file = None
+  # test_file = None
+  # metadata = None
+  # class_counts = dict()
+  # class_probabilities = dict()
+  # conditional_counts = dict()
+  # conditional_probabilities = dict()
+  # mutual_information = dict()
+  # root_feature = None
+  # parent_mapping = dict()
+  # printer = None
+  # curve_data = list()
+  # correctly_predicted_count = 0
+
+  def initialize_variables(self):
+    self.training_file = None
+    self.test_file = None
+    self.metadata = None
+    self.class_counts = dict()
+    self.class_probabilities = dict()
+    self.conditional_counts = dict()
+    self.conditional_probabilities = dict()
+    self.mutual_information = dict()
+    self.root_feature = None
+    self.parent_mapping = dict()
+    self.printer = None
+    self.curve_data = list()
+    self.correctly_predicted_count = 0
 
   def construct_tree(self):
     visited_vertices = list()
@@ -197,6 +221,7 @@ class TAN():
       self.conditional_probabilities[index][class_val] = dict()          
 
   def perform_tan(self, data, metadata):
+    self.initialize_variables()
     self.metadata = metadata
     self.calculate_mutual_information(data)
     self.construct_tree()
@@ -281,34 +306,34 @@ def read_data(file):
   data, metadata = arff.loadarff(open(file, "r"))
   return data, metadata
 
-def plot_precision_recall_curve(curve_data, positive_label, bayes):
-  curve_data.sort(key=lambda x: (-x[2]))
-  total_positive_labels = 0
-  for values in curve_data:
-    if values[0] == positive_label:
-      total_positive_labels += 1
+# def plot_precision_recall_curve(curve_data, positive_label, bayes):
+#   curve_data.sort(key=lambda x: (-x[2]))
+#   total_positive_labels = 0
+#   for values in curve_data:
+#     if values[0] == positive_label:
+#       total_positive_labels += 1
 
-  true_positives_so_far = 0
-  xs = list()
-  ys = list()
-  for index, record in enumerate(curve_data):
-    if record[0] == positive_label:
-      true_positives_so_far += 1
-    precision = float(true_positives_so_far) / (index + 1.0)
-    recall = float(true_positives_so_far) / (total_positive_labels)
-    xs.append(recall)
-    ys.append(precision)
+#   true_positives_so_far = 0
+#   xs = list()
+#   ys = list()
+#   for index, record in enumerate(curve_data):
+#     if record[0] == positive_label:
+#       true_positives_so_far += 1
+#     precision = float(true_positives_so_far) / (index + 1.0)
+#     recall = float(true_positives_so_far) / (total_positive_labels)
+#     xs.append(recall)
+#     ys.append(precision)
 
-  if bayes:
-    curve_type = "Naive Bayes"
-  else:
-    curve_type = "Tree Augmented Network"
-  plt.axis([0, 1.2, 0, 1.2])
-  plt.title(str(curve_type) + " Precision-Recall Curve")
-  plt.xlabel("Recall")
-  plt.ylabel("Precision")
-  plt.plot(xs, ys)
-  plt.show()
+#   if bayes:
+#     curve_type = "Naive Bayes"
+#   else:
+#     curve_type = "Tree Augmented Network"
+#   plt.axis([0, 1.2, 0, 1.2])
+#   plt.title(str(curve_type) + " Precision-Recall Curve")
+#   plt.xlabel("Recall")
+#   plt.ylabel("Precision")
+#   plt.plot(xs, ys)
+#   plt.show()
 
 def classify():
   training_file = sys.argv[1]
@@ -322,7 +347,7 @@ def classify():
     naive_bayes.predict(test_data, test_metadata)
     class_label = naive_bayes.metadata._attrnames[-1]
     positive_label = naive_bayes.metadata._attributes[class_label][1][0]
-    plot_precision_recall_curve(naive_bayes.curve_data, positive_label, True)
+    # plot_precision_recall_curve(naive_bayes.curve_data, positive_label, True)
   else:
     tan = TAN()
     training_data, training_metadata = read_data(training_file)
@@ -331,7 +356,7 @@ def classify():
     tan.predict(training_data, test_data, test_metadata)
     class_label = tan.metadata._attrnames[-1]
     positive_label = tan.metadata._attributes[class_label][1][0]
-    plot_precision_recall_curve(tan.curve_data, positive_label, False)
+    # plot_precision_recall_curve(tan.curve_data, positive_label, False)
 
 def perform_cv():
   file = sys.argv[1]
@@ -342,6 +367,7 @@ def perform_cv():
   end_of_test_data = None
   accuracy = dict()
   deltas = list()
+
   for i in range(n):
     start_of_test_data = i * fold_size
     if i == n - 1:
@@ -359,14 +385,6 @@ def perform_cv():
       else:
         training_data.append(record)
 
-    # if(i == 1):
-    #   print "TEST DATA"
-    #   for a in test_data:
-    #     print a
-    #   print "TRAINING DATA"
-    #   for b in training_data:
-    #     print b
-
     bayes = NaiveBayes()
     bayes.perform_naive_bayes(training_data, metadata)
     bayes.predict(test_data, metadata)
@@ -376,17 +394,17 @@ def perform_cv():
     tan.perform_tan(training_data, metadata)
     tan.predict(training_data, test_data, metadata)
     accuracy["tan"] = float(tan.correctly_predicted_count) / len(test_data)
-    print bayes.correctly_predicted_count, tan.correctly_predicted_count, accuracy["naive-bayes"], accuracy["tan"]
-    deltas.append(accuracy["naive-bayes"] - accuracy["tan"])
-    print "-"*50
+    diff = accuracy["naive-bayes"] - accuracy["tan"]
+    deltas.append(diff)
+    # print "Iteration No:" + str(i+1)
+    # print "Accuracy - Naive Bayes: " + str(accuracy["naive-bayes"]) + " TAN: " + str(accuracy["tan"])
+    # print "Delta in Naive Bayes accuracy and TAN Accuracy: " + str(diff)
 
-  # pdb.set_trace()
   mean_delta = sum(deltas) / n
   sum_delta_diffs = 0.0
   for delta in deltas:
     sum_delta_diffs += (delta - mean_delta) ** 2
   t_stat = mean_delta / math.sqrt(sum_delta_diffs/(n * (n-1)))
-  pdb.set_trace()
   print mean_delta
   print t_stat
 

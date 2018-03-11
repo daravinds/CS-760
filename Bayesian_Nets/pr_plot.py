@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # Cannot be run standalone. Can be run only from bayes.py only
 # by uncommenting the calls to plot_precision_recall_curve method
 
-def plot_precision_recall_curve(curve_data, positive_label):
+def plot_precision_recall_curve(curve_data, positive_label, bayes):
   curve_data.sort(key=lambda x: (-x[2]))
   total_positive_labels = 0
   for values in curve_data:
@@ -23,8 +23,13 @@ def plot_precision_recall_curve(curve_data, positive_label):
     xs.append(recall)
     ys.append(precision)
 
-  plt.title("Precision-Recall Curves")
+  if bayes:
+    curve_type = "Naive Bayes"
+  else:
+    curve_type = "Tree Augmented Network"
+  plt.axis([0, 1.2, 0, 1.2])
+  plt.title(str(curve_type) + " Precision-Recall Curve")
   plt.xlabel("Recall")
   plt.ylabel("Precision")
-  plt.plot(xs, ys, label='Precision-Recall Curves')
+  plt.plot(xs, ys)
   plt.show()
