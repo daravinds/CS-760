@@ -83,11 +83,9 @@ class NeuralNet():
     for i in range(self.no_of_features + 1):
       self.weightsXtoH.append([])
       for j in range(self.hidden_units):
-        # self.weightsXtoH[i].append(0.005)
         self.weightsXtoH[i].append(random.uniform(-0.01, 0.01))
 
     for j in range(self.hidden_units + 1):
-      # self.weightsHtoO.append(0.005)
       self.weightsHtoO.append(random.uniform(-0.01, 0.01))
 
   def compute_cross_entropy(self, o, y):
@@ -143,28 +141,18 @@ class NeuralNet():
     for j in range(self.hidden_units):
       z = 0.0
       for i in range(self.no_of_features + 1):
-        # print str(self.weightsXtoH[i][j]) + "  " + str(record[i])
-        # pdb.set_trace()
         z += (self.weightsXtoH[i][j] * record[i])
-      # print "Hidden input (weighted sum):" + str(z)
       self.hidden_outputs[j] = sigmoid(z)
-      # print "Hidden output: " + str(self.hidden_outputs[j])
-      # print str(j) + " " + str(self.hidden_outputs[j])
 
     zOutput = self.bias * self.weightsHtoO[0]
-    # print "zOutput: " + str(zOutput)
     for j in range(self.hidden_units):
-      # print str(self.weightsHtoO[j + 1]) + "  " + str(self.hidden_outputs[j])
       zOutput += (self.weightsHtoO[j + 1] * self.hidden_outputs[j])
-    # print "zOutput: " + str(zOutput)
 
     o = sigmoid(zOutput)
-    # print "o: " + str(o)
     if(o <= 0.5):
       predicted_label = 0
     else:
       predicted_label = 1
-    # print "Predicted:" + str(predicted_label)
     if record[-1] == self.negative_label:
       actual_label = 0
     else:
@@ -174,33 +162,18 @@ class NeuralNet():
 
   def compute_errors(self, o, y):
     self.deltaO = float(y - o)
-    # print "deltaO:" + str(self.deltaO)
     for j in range(self.hidden_units):
       delta = self.hidden_outputs[j] * (1 - self.hidden_outputs[j]) * self.deltaO * self.weightsHtoO[j + 1]
-      # print "deltaH[" + str(j) + "]: " + str(delta)
       self.deltaH[j] = delta
 
-  def print2D(self, a):
-    for row in a:
-      print row
-
   def compute_gradients(self, record):
-    # print "Before WeightHtoO: " + str(self.weightsHtoO[0])
-    # print "BiasDiff HtoO: " + str(self.learning_rate * self.deltaO)
     self.weightsHtoO[0] += (self.learning_rate * self.deltaO)
-    # print "After WeightHtoO: " + str(self.weightsHtoO[0])
     for j in range(self.hidden_units):
-      # print "Before WeightHtoO: " + str(self.weightsHtoO[j + 1])
-      # print "DiffHtoO: " + str(self.learning_rate * self.deltaO * self.hidden_outputs[j])
       self.weightsHtoO[j + 1] += (self.learning_rate * self.deltaO * self.hidden_outputs[j])
-      # print "After WeightHtoO: " + str(self.weightsHtoO[j + 1])
 
     for j in range(self.hidden_units):
       for i in range(self.no_of_features + 1):
-        # print "Before WeightXtoH: " + str(self.weightsXtoH[i][j])
         self.weightsXtoH[i][j] += (self.learning_rate * self.deltaH[j] * record[i])
-        # print "After WeightXtoH: " + str(self.weightsXtoH[i][j])
-
 
   def perform_training(self, learning_rate, hidden_units, epochs, training_file, test_file):
     self.initialize_variables()
@@ -208,16 +181,13 @@ class NeuralNet():
     self.assign_variables(learning_rate, hidden_units, epochs, training_file, test_file)
     self.compute_mean_and_standard_deviation(data)
     normalized_data = self.normalize(data)
-    # self.print2D(normalized_data)
     self.initialize_weights()
 
     for loop in range(self.epochs):
       numpy.random.shuffle(normalized_data)
-      # self.print2D(self.weightsXtoH)
 
       for index, record in enumerate(normalized_data):
         o, predicted_label, actual_label = self.perform_forward_propagation(record)
-        # print str(o)
         self.compute_errors(o, actual_label)
         self.compute_gradients(record)
 
@@ -226,7 +196,6 @@ class NeuralNet():
       for record in normalized_data:
         o, predicted_label, actual_label = self.perform_forward_propagation(record)
         total_cross_entropy += self.compute_cross_entropy(o, actual_label)
-        # print str(o) + " " + str(predicted_label) + " " + str(actual_label)
         if predicted_label == actual_label:
           correct_classifications += 1
       print str(loop + 1) + "\t" + str("%0.9f"%total_cross_entropy) + "\t" + str(correct_classifications) + "\t" + str(len(data) - correct_classifications)
@@ -257,9 +226,12 @@ class NeuralNet():
         else:
           fp += 1
 
-    precision = (1.0 * tp) / (tp + fp)
-    recall = (1.0 * tp) / (tp + fn)
-    f1 = float((2.0 * precision * recall) / (precision + recall))
+    if (tp + fp) > 0:
+      precision = (1.0 * tp) / (tp + fp)
+    if (tp + fn) > 0:
+      recall = (1.0 * tp) / (tp + fn)
+    if (precision + recall) > 0:
+      f1 = float((2.0 * precision * recall) / (precision + recall))
     print str(correct_classifications) + "\t" + str(len(data) - correct_classifications)
     print str(f1)
     return f1
@@ -279,7 +251,6 @@ def classify():
   training_file = sys.argv[4]
   test_file = sys.argv[5]
   neural_net.perform_training(learning_rate, hidden_units, epochs, training_file, test_file)
-  # pdb.set_trace()
   f1 = neural_net.predict()
 
 if __name__ == "__main__":

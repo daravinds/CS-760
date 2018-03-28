@@ -60,11 +60,9 @@ class Logistic():
     return self.feature_type_map[feature_name] == "nominal" or self.feature_type_map[feature_name] == "ordinal"
 
   def initialize_weights(self):
-    # self.weights["bias"] = 0.005
     self.weights["bias"] = random.uniform(-0.01, 0.01)
     for feature in self.features:
       if self.is_real_or_numeric_feature(feature):
-        # self.weights[feature] = 0.005
         self.weights[feature] = random.uniform(-0.01, 0.01)
       elif self.is_nominal_feature(feature):
         self.weights[feature] = dict()
@@ -150,7 +148,6 @@ class Logistic():
       for record in data:
         o, predicted_label, actual_label = self.predict_instance(record)
         total_cross_entropy += self.compute_cross_entropy(o, actual_label)
-        # print str(o) + " " + str(predicted_label) + " " + str(actual_label)
 
         if predicted_label == actual_label:
           correct_classifications += 1
@@ -200,11 +197,14 @@ class Logistic():
         else:
           fp += 1
 
-    precision = (1.0 * tp) / (tp + fp)
-    recall = (1.0 * tp) / (tp + fn)
-    f1 = float((2.0 * precision * recall) / (precision + recall))
+    if (tp + fp) > 0:
+      precision = (1.0 * tp) / (tp + fp)
+    if (tp + fn) > 0:
+      recall = (1.0 * tp) / (tp + fn)
+    if (precision + recall) > 0:
+      f1 = float((2.0 * precision * recall) / (precision + recall))
     print str(correct_classifications) + "\t" + str(len(data) - correct_classifications)
-    print str(f1)
+    print str("%0.12f"%f1)
     return f1
 
 def sigmoid(value):
