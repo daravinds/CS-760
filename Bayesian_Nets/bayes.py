@@ -1,6 +1,7 @@
 from scipy.io import arff
 import sys
 import math
+import pdb
 
 class NaiveBayes():
   # training_file = None
@@ -38,6 +39,7 @@ class NaiveBayes():
 
     features = self.metadata._attrnames[:-1]
     for index, feature in enumerate(features):
+      # pdb.set_trace()
       feature_values = self.metadata._attributes[feature][1]
       for class_val in class_values:
         denominator = self.class_counts[class_val] + len(feature_values)
